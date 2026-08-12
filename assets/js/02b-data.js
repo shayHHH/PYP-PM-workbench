@@ -27,6 +27,10 @@ window.DATA = (function () {
     'reviews', 'reports', 'cross', 'traces', 'todos',
     'notes', 'notices', 'allocs', 'submissions'
   ];
+  var ROLE_SELF = {
+    director: { id: 'M_DIRECTOR', fallback: '产品总监', func: 'director', title: '产品总监' },
+    pm: { id: 'M_PM', fallback: '项目经理', func: 'pm', title: '项目经理' }
+  };
 
   function today() { return new Date(); }
 
@@ -37,23 +41,61 @@ window.DATA = (function () {
     var db = {
       TODAY: today(), quarters: quartersOf(today()),
       org: { name: '我的组织', bu: '' },
-      me: { name: '' }                     // 你的真实姓名，在「上手引导」里填
+      me: { name: '' },                    // 兼容旧版导出；运行时以 meByRole 为准
+      meByRole: {
+        director: { name: '' },
+        pm: { name: '' }
+      }
     };
     COLLS.forEach(function (k) { db[k] = []; });
-    db.members = selfMembers();
+    db.members = selfMembers(db.meByRole);
     return db;
   }
 
-  /* 成员表里必须至少有「你自己」一条，否则所有负责人下拉框都是空的，
-     一条业务数据都建不出来。名字没填就先叫「我」，填了会同步改过来。 */
-  function selfMembers(name) {
-    return [{
-      id: 'M01', name: name || '我', dept: '', title: '',
-      func: 'pm',
+  function roleName(meByRole, role) {
+    var n = meByRole && meByRole[role] && meByRole[role].name;
+    return String(n || '').trim();
+  }
+  function selfMember(role, name) {
+    var def = ROLE_SELF[role];
+    return {
+      id: def.id, name: name || def.fallback, dept: '', title: def.title,
+      func: def.func,
       loadPct: 0, capacity: 40, allocHours: 0, efficiency: 1,
       taskDone: 0, taskOpen: 0, taskDelay: 0, onlineDays: 0,
       email: '', skills: [], projects: [], weekHours: 0, conflict: false
-    }];
+    };
+  }
+  /* 两个登录角色各有自己的默认成员，避免共享同一个「我」。 */
+  function selfMembers(meByRole) {
+    return [
+      selfMember('director', roleName(meByRole, 'director')),
+      selfMember('pm', roleName(meByRole, 'pm'))
+    ];
+  }
+  function ensureMeByRole(raw, db) {
+    raw = raw || {};
+    var legacyName = raw.me && typeof raw.me === 'object' ? String(raw.me.name || '').trim() : '';
+    var m = raw.meByRole && typeof raw.meByRole === 'object' ? raw.meByRole : {};
+    db.meByRole = {
+      director: { name: String((m.director && m.director.name) || legacyName || '').trim() },
+      pm: { name: String((m.pm && m.pm.name) || '').trim() }
+    };
+    db.me = { name: db.meByRole.director.name };
+  }
+  function ensureRoleMembers(db, rawMembers) {
+    var out = [], seen = {};
+    var directorSelf = selfMember('director', roleName(db.meByRole, 'director'));
+    var pmSelf = selfMember('pm', roleName(db.meByRole, 'pm'));
+    [directorSelf, pmSelf].forEach(function (m) { out.push(m); seen[m.id] = true; });
+    (rawMembers || []).forEach(function (m) {
+      if (!m || typeof m !== 'object') return;
+      if (m.id === 'M01' || m.id === directorSelf.id || m.id === pmSelf.id) return;
+      if (seen[m.id]) return;
+      seen[m.id] = true;
+      out.push(m);
+    });
+    db.members = out;
   }
 
   /* 以当前季度为中心，给出前后共 5 个季度标签 */
@@ -87,16 +129,15 @@ window.DATA = (function () {
         if (Array.isArray(raw[k])) db[k] = raw[k];
       });
       if (raw.org && typeof raw.org === 'object') db.org = raw.org;
-      if (raw.me && typeof raw.me === 'object') db.me = raw.me;
-      /* members 允许为空数组（用户自己删光了），但至少要有自己 */
-      if (!db.members.length) db.members = selfMembers(db.me.name);
+      ensureMeByRole(raw, db);
+      ensureRoleMembers(db, Array.isArray(raw.members) ? raw.members : []);
     }
     return pack(db);
   }
 
   /* 只序列化集合与 org / me，不存 TODAY（它每次开机重算） */
   function pack(db) {
-    var out = { org: db.org, me: db.me };
+    var out = { org: db.org, me: db.me, meByRole: db.meByRole };
     COLLS.forEach(function (k) { out[k] = db[k] || []; });
     return out;
   }
@@ -150,21 +191,18 @@ window.DATA = (function () {
     if (!d || typeof d !== 'object') return { ok: false, msg: '文件里没有找到数据对象' };
     var hit = COLLS.filter(function (k) { return Array.isArray(d[k]); });
     if (!hit.length) return { ok: false, msg: '文件里没有任何可识别的集合（lines / projects / requirements …）' };
-    var db = blank();
-    hit.forEach(function (k) { db[k] = d[k]; });
-    if (d.org) db.org = d.org;
-    if (d.me) db.me = d.me;
-    if (!db.members.length) db.members = selfMembers(db.me.name);
-    U.save(DB_KEY, pack(db));
-    if (window.CLOUD && CLOUD.queueSave) CLOUD.queueSave(pack(db));
+    var db = normalize(d);
+    U.save(DB_KEY, db);
+    if (window.CLOUD && CLOUD.queueSave) CLOUD.queueSave(db);
     var n = hit.reduce(function (s, k) { return s + d[k].length; }, 0);
     return { ok: true, msg: '已导入 ' + hit.length + ' 类共 ' + n + ' 条记录' };
   }
 
   function clearReal() {
     var db = blank();
-    U.save(DB_KEY, pack(db));
-    if (window.CLOUD && CLOUD.queueSave) CLOUD.queueSave(pack(db));
+    var payload = pack(db);
+    U.save(DB_KEY, payload);
+    if (window.CLOUD && CLOUD.queueSave) CLOUD.queueSave(payload);
   }
 
   /* ============ 上手清单的手动完成标记 ============ */

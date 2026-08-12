@@ -258,10 +258,11 @@
 
   function editMem(m) {
     var self = S.isSelf(m);
+    var selfRole = S.selfRoleOf ? S.selfRoleOf(m) : '';
     UI.formModal({
       title: '编辑成员 · ' + m.name, wide: true,
       tip: self
-        ? '这是「你自己」。改姓名会同时更新顶栏抬头、导出文件的作者，以及所有历史记录里的负责人。'
+        ? '这是系统默认身份。改姓名会更新对应角色的顶栏抬头、导出作者，以及历史记录里的负责人。'
         : '改姓名会自动同步该成员在需求 / 任务 / 会议等所有记录里的负责人，不会留下孤儿名字。',
       okText: '保存',
       fields: [
@@ -287,11 +288,7 @@
 
         if (nw !== old) {
           if (self) {
-            /* 走 setOrg 这一条路：它会把 DB.me、成员表里的自己、
-               以及所有历史引用一次性改掉，避免三处各改一半。 */
-            var o = S.org();
-            S.setOrg(o.name, o.bu, nw);
-            renamed = 1;
+            renamed = S.setSelfName(selfRole || S.role(), nw) || 0;
           } else {
             renamed = S.renameActor(old, nw);
             patch.name = nw;

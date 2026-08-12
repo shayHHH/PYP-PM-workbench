@@ -13,14 +13,65 @@ window.S = (function () {
   if (DB.org) { C.ORG.name = DB.org.name || C.ORG.name; C.ORG.bu = DB.org.bu === undefined ? C.ORG.bu : DB.org.bu; }
   else { DB.org = { name: C.ORG.name, bu: C.ORG.bu }; }
 
-  /* 「我是谁」：C.ROLES 里只放占位的「我」，真名存在本地库 DB.me，
-     这里回填进两个角色，顶栏、留痕、导出抬头就都是你自己的名字。 */
-  if (!DB.me) DB.me = { name: '' };
+  var SELF_DEF = {
+    director: { id: 'M_DIRECTOR', fallback: '产品总监', func: 'director', title: '产品总监' },
+    pm: { id: 'M_PM', fallback: '项目经理', func: 'pm', title: '项目经理' }
+  };
+
+  if (!DB.meByRole) DB.meByRole = { director: { name: '' }, pm: { name: '' } };
+  if (!DB.meByRole.director) DB.meByRole.director = { name: (DB.me && DB.me.name) || '' };
+  if (!DB.meByRole.pm) DB.meByRole.pm = { name: '' };
+  if (!DB.me) DB.me = { name: DB.meByRole.director.name || '' };
   applyMe();
   function applyMe() {
-    var n = (DB.me && DB.me.name) || '';
-    if (!n) return;
-    Object.keys(C.ROLES).forEach(function (k) { C.ROLES[k].user.name = n; });
+    Object.keys(C.ROLES).forEach(function (k) {
+      var n = DB.meByRole && DB.meByRole[k] && DB.meByRole[k].name;
+      C.ROLES[k].user.name = n || '我';
+    });
+  }
+  function selfFallback(roleKey) { return (SELF_DEF[roleKey] || {}).fallback || '我'; }
+  function selfId(roleKey) { return (SELF_DEF[roleKey] || {}).id || 'M01'; }
+  function selfDisplayName(roleKey) {
+    var n = DB.meByRole && DB.meByRole[roleKey] && DB.meByRole[roleKey].name;
+    return String(n || '').trim() || selfFallback(roleKey);
+  }
+  function ensureSelfMember(roleKey) {
+    var def = SELF_DEF[roleKey];
+    if (!def) return null;
+    var m = (DB.members || []).filter(function (x) { return x.id === def.id; })[0];
+    if (!m) {
+      m = {
+        id: def.id, name: selfDisplayName(roleKey), dept: '', title: def.title,
+        func: def.func, loadPct: 0, capacity: 40, allocHours: 0, efficiency: 1,
+        taskDone: 0, taskOpen: 0, taskDelay: 0, onlineDays: 0,
+        email: '', skills: [], projects: [], weekHours: 0, conflict: false
+      };
+      DB.members.unshift(m);
+    }
+    return m;
+  }
+  function selfRoleOf(m) {
+    if (!m) return '';
+    if (m.id === SELF_DEF.director.id) return 'director';
+    if (m.id === SELF_DEF.pm.id) return 'pm';
+    if (m.id === 'M01') return state.role;
+    return '';
+  }
+  function setSelfName(roleKey, myName, silent) {
+    roleKey = SELF_DEF[roleKey] ? roleKey : state.role;
+    DB.meByRole = DB.meByRole || {};
+    DB.meByRole[roleKey] = DB.meByRole[roleKey] || { name: '' };
+    var old = selfDisplayName(roleKey);
+    var nw = String(myName || '').trim();
+    DB.meByRole[roleKey] = { name: nw };
+    DB.me = { name: DB.meByRole.director.name || '' };
+    var self = ensureSelfMember(roleKey);
+    var next = selfDisplayName(roleKey);
+    if (self) self.name = next;
+    var renamed = next && next !== old ? renameActor(old, next) : 0;
+    applyMe();
+    if (!silent) { persist(); emit('data'); }
+    return renamed;
   }
 
   /* ============ 会话状态（记忆上一次选择）============ */
@@ -382,20 +433,16 @@ window.S = (function () {
   function isEmpty() { return DATA.isEmpty(DB); }
   function counts() { return DATA.counts(DB); }
   function org() { return DB.org || { name: C.ORG.name, bu: C.ORG.bu }; }
-  function me() { return DB.me || { name: '' }; }
+  function me() {
+    return (DB.meByRole && DB.meByRole[state.role]) || { name: '' };
+  }
   /* 改抬头：组织名 / 事业部 / 你的名字。名字变了要同步改成员表里的自己，
      否则历史数据的负责人会挂在一个不存在的名字上。 */
   function setOrg(name, bu, myName) {
     DB.org = { name: name || '我的组织', bu: bu || '' };
     C.ORG.name = DB.org.name; C.ORG.bu = DB.org.bu;
     if (myName !== undefined) {
-      var old = (DB.me && DB.me.name) || '我';
-      var nw = String(myName || '').trim();
-      DB.me = { name: nw };
-      var self = (DB.members || []).filter(function (m) { return m.id === 'M01'; })[0];
-      if (self) self.name = nw || '我';
-      if (nw && nw !== old) renameActor(old, nw);
-      applyMe();
+      setSelfName(state.role, myName, true);
     }
     persist();
     emit('data');
@@ -513,9 +560,11 @@ window.S = (function () {
   /* 「你自己」不能删：成员表至少要留一条，否则所有负责人下拉框都是空的。 */
   function isSelf(m) {
     if (!m) return false;
-    if (m.id === 'M01') return true;
-    var mine = (DB.me && DB.me.name) || '';
-    return !!mine && m.name === mine;
+    if (m.id === 'M01' || m.id === selfId('director') || m.id === selfId('pm')) return true;
+    return Object.keys(SELF_DEF).some(function (k) {
+      var n = DB.meByRole && DB.meByRole[k] && DB.meByRole[k].name;
+      return !!n && m.name === n;
+    });
   }
   var TRACE_MAP = {
     requirements: ['需求变动', 'requirement'], releases: ['版本发布', 'release'],
@@ -594,6 +643,7 @@ window.S = (function () {
     add: add, update: update, remove: remove, persist: persist,
     isEmpty: isEmpty, counts: counts, org: org, me: me, setOrg: setOrg,
     renameActor: renameActor, actorRefs: actorRefs, isSelf: isSelf,
+    selfRoleOf: selfRoleOf, setSelfName: setSelfName,
     lineChildren: lineChildren, renameLine: renameLine,
     moveLineChildren: moveLineChildren, dropLineChildren: dropLineChildren,
     pref: pref, setPref: setPref, savedViews: savedViews, saveView: saveView, dropView: dropView,
