@@ -1,0 +1,17 @@
+/* 打印 / 导出 PDF：只留内容区，去掉一切导航和交互控件 */
+@media print{
+  body{min-width:0;overflow:visible;background:#fff}
+  .app{height:auto;display:block;overflow:visible}
+  .topbar,.sidebar,.crumb-bar,.toolbar,.pager,.page-acts,.card-x,.row-acts,
+  .quick,.drawer,.mask,.modal,.toasts,.btn,.btn-primary,.btn-sm,.btn-group,
+  .sidebar-foot,.bulk-bar,.tabs{display:none !important}
+  .main,.content{overflow:visible;height:auto;padding:0}
+  .card,.metric,.detail-hero{break-inside:avoid;box-shadow:none;border-color:#cbd5e1}
+  .grid{gap:10px}
+  .g4,.g5,.g6{grid-template-columns:repeat(3,1fr)}
+  .tbl th{position:static}
+  .gantt,.roadmap,.kanban{max-height:none;overflow:visible}
+  .print-only{display:block !important}
+  @page{size:A4 landscape;margin:12mm}
+}
+.print-only{display:none}

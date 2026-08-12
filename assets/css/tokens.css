@@ -1,0 +1,124 @@
+/* ==========================================================================
+   设计变量 · 产品管理工作台 (Product Management Workbench)
+   一套设计系统，两个角色。角色差异只通过 --c-accent 系列变量表达，
+   其余全部共用 —— 这样两个首页看起来不同，但骨子里是同一个后台。
+   ========================================================================== */
+:root{
+  /* ---- 中性色 ---- */
+  --c-shell:#0f172a;          /* 侧栏底 */
+  --c-shell-2:#1e293b;        /* 侧栏分组底 */
+  --c-shell-hover:#1e293b;
+  --c-topbar:#ffffff;
+  --c-bg:#f1f5f9;             /* 内容区底 */
+  --c-bg-2:#f8fafc;
+  --c-card:#ffffff;
+  --c-border:#e2e8f0;
+  --c-border-strong:#cbd5e1;
+  --c-head:#f8fafc;           /* 表头底 */
+
+  --t-1:#0f172a;              /* 主文字 */
+  --t-2:#334155;              /* 次文字 */
+  --t-3:#64748b;              /* 弱文字 */
+  --t-4:#94a3b8;              /* 占位/禁用 */
+  --t-inv:#f8fafc;
+  --t-inv-2:#94a3b8;
+
+  /* ---- 品牌主色（系统级，不随角色变）---- */
+  --c-primary:#2563eb;
+  --c-primary-d:#1d4ed8;
+  --c-primary-l:#eff6ff;
+  --c-primary-bd:#bfdbfe;
+
+  /* ---- 角色强调色（随 body[data-role] 覆盖）---- */
+  --c-accent:#4f46e5;
+  --c-accent-d:#4338ca;
+  --c-accent-l:#eef2ff;
+  --c-accent-bd:#c7d2fe;
+  --c-accent-rgb:79,70,229;
+
+  /* ---- 语义状态色 ---- */
+  --s-done:#16a34a;    --s-done-bg:#f0fdf4;    --s-done-bd:#bbf7d0;    /* 已完成/已发布/正常 */
+  --s-doing:#2563eb;   --s-doing-bg:#eff6ff;   --s-doing-bd:#bfdbfe;   /* 进行中/开发中 */
+  --s-plan:#7c3aed;    --s-plan-bg:#f5f3ff;    --s-plan-bd:#ddd6fe;    /* 规划中/待评审 */
+  --s-warn:#d97706;    --s-warn-bg:#fffbeb;    --s-warn-bd:#fde68a;    /* 待处理/风险中/黄灯 */
+  --s-danger:#dc2626;  --s-danger-bg:#fef2f2;  --s-danger-bd:#fecaca;  /* 延期/阻塞/红灯 */
+  --s-idle:#64748b;    --s-idle-bg:#f1f5f9;    --s-idle-bd:#cbd5e1;    /* 已关闭/暂缓/未开始 */
+  --s-cyan:#0891b2;    --s-cyan-bg:#ecfeff;    --s-cyan-bd:#a5f3fc;    /* 补充维度 */
+
+  /* ---- 优先级 ---- */
+  --p0:#b91c1c; --p1:#dc2626; --p2:#d97706; --p3:#0891b2; --p4:#64748b;
+
+  /* ---- 图表色板（12色，保证同图内可辨识）---- */
+  --ch-1:#2563eb; --ch-2:#16a34a; --ch-3:#d97706; --ch-4:#7c3aed;
+  --ch-5:#0891b2; --ch-6:#dc2626; --ch-7:#65a30d; --ch-8:#c026d3;
+  --ch-9:#0284c7; --ch-10:#ea580c; --ch-11:#4f46e5; --ch-12:#059669;
+
+  /* ---- 字号（企业级高信息密度）---- */
+  --f-xs:11px; --f-sm:12px; --f-base:13px; --f-md:14px; --f-lg:16px;
+  --f-xl:19px; --f-2xl:24px; --f-3xl:30px; --f-4xl:38px;
+
+  /* ---- 间距 ---- */
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px;
+  --sp-5:20px; --sp-6:24px; --sp-8:32px; --sp-10:40px;
+
+  /* ---- 圆角/阴影 ---- */
+  --radius-sm:4px; --radius:6px; --radius-lg:10px; --radius-full:999px;
+  --shadow-sm:0 1px 2px rgba(15,23,42,.06);
+  --shadow:0 2px 8px rgba(15,23,42,.08);
+  --shadow-md:0 4px 16px rgba(15,23,42,.10);
+  --shadow-lg:0 12px 40px rgba(15,23,42,.18);
+
+  /* ---- 布局尺寸 ---- */
+  --topbar-h:56px;
+  --sidebar-w:214px;
+  --sidebar-w-mini:56px;
+  --crumb-h:40px;
+  --z-drawer:600; --z-modal:700; --z-pop:500;
+  /* toast 是瞬时反馈，任何叠层之上都要看得见。叠层每加一层 +200（见 05-ui.js zAt），
+     留足空间，别让它被第二、第三层弹窗盖住。 */
+  --z-toast:9000;
+}
+
+/* 角色 A：产品总监 —— 靛蓝，战略/全局的气质 */
+body[data-role="director"]{
+  --c-accent:#4f46e5; --c-accent-d:#4338ca;
+  --c-accent-l:#eef2ff; --c-accent-bd:#c7d2fe; --c-accent-rgb:79,70,229;
+}
+/* 角色 B：项目经理 —— 青蓝，执行/推进的气质 */
+body[data-role="pm"]{
+  --c-accent:#0e7490; --c-accent-d:#155e75;
+  --c-accent-l:#ecfeff; --c-accent-bd:#a5f3fc; --c-accent-rgb:14,116,144;
+}
+
+/* ---- 基础重置 ---- */
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB",
+              "Microsoft YaHei","Segoe UI",Roboto,sans-serif;
+  font-size:var(--f-base);
+  line-height:1.55;
+  color:var(--t-1);
+  background:var(--c-bg);
+  -webkit-font-smoothing:antialiased;
+  min-width:1180px;
+  overflow:hidden;
+}
+a{color:inherit;text-decoration:none}
+button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit;outline:none}
+button{cursor:pointer;border:none;background:none}
+table{border-collapse:collapse;width:100%}
+ul,ol{list-style:none}
+h1,h2,h3,h4,h5{font-weight:600}
+input::placeholder,textarea::placeholder{color:var(--t-4)}
+
+/* 数字统一用等宽，表格里对齐才好看 */
+.num,.metric-val,.tbl td.num,.tbl th.num{
+  font-variant-numeric:tabular-nums;
+  font-feature-settings:"tnum";
+}
+
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:5px}
+::-webkit-scrollbar-thumb:hover{background:#94a3b8}
+::-webkit-scrollbar-track{background:transparent}

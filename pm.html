@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>项目管理工作台 · 项目经理版</title>
+<link rel="stylesheet" href="assets/css/tokens.css">
+<link rel="stylesheet" href="assets/css/layout.css">
+<link rel="stylesheet" href="assets/css/components.css">
+<link rel="stylesheet" href="assets/css/print.css">
+</head>
+<body data-role="pm" class="edition-pm">
+
+<div class="app" id="app">
+
+  <!-- ============ 顶栏 ============ -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      <span class="brand-mark">PM</span>
+      <span class="brand-text">
+        <b class="brand-title">项目管理工作台</b>
+        <span class="brand-sub">PM EDITION</span>
+      </span>
+    </div>
+
+    <div class="topbar-scope">
+      <div class="scope-org">
+        <b id="orgName">我的组织</b>
+        <span id="orgBu"></span>
+      </div>
+      <div class="scope-pick">
+        <label>产品线</label>
+        <select class="scope-select" id="scopeLine"></select>
+      </div>
+      <div class="scope-pick">
+        <label>项目</label>
+        <select class="scope-select" id="scopeProject"></select>
+      </div>
+      <span class="tag tag-lg" id="scopeStatus">—</span>
+    </div>
+
+    <div class="topbar-search">
+      <div class="gsearch" id="gsearch">
+        <span class="g-ico">⌕</span>
+        <input type="text" id="globalSearch" autocomplete="off"
+               placeholder="全局搜索：需求 / 任务 / 会议 / 版本 / 反馈 / 风险">
+        <span class="g-hint">⌘K</span>
+        <button class="g-clear" id="gsClear" title="清空">×</button>
+        <div class="gs-pop" id="gsPop"></div>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <div class="tb-clock">
+        <div class="d" id="clockDate">—</div>
+        <div class="t" id="clockTime">—</div>
+      </div>
+
+      <div class="role-switch" id="roleSwitch" title="切换角色视角">
+        <button class="role-opt on" data-role="director"><span class="ro-ico">◈</span>产品总监</button>
+        <button class="role-opt" data-role="pm"><span class="ro-ico">◆</span>项目经理</button>
+      </div>
+
+      <div class="pop-wrap">
+        <button class="tb-icon" id="btnNotice" title="提醒">🔔<span class="tb-badge" id="noticeBadge">0</span></button>
+        <div class="pop" id="popNotice" style="width:320px"></div>
+      </div>
+
+      <div class="pop-wrap">
+        <button class="tb-btn" id="btnCreate">＋ 新建 ▾</button>
+        <div class="pop" id="popCreate"></div>
+      </div>
+
+      <div class="pop-wrap">
+        <div class="user-chip" id="userChip">
+          <span class="user-avatar" id="userAva">我</span>
+          <span class="user-meta">
+            <b id="userName">我</b>
+            <span id="userRole">产品总监</span>
+          </span>
+        </div>
+        <div class="pop" id="popUser"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ 主体 ============ -->
+  <div class="body">
+    <nav class="sidebar">
+      <div class="nav-scroll" id="navScroll"></div>
+      <div class="sidebar-foot">
+        <button class="sf-btn" id="btnMini" title="收起导航"><span>⇤</span><span class="sf-text">收起</span></button>
+        <button class="sf-btn" id="btnHelp" title="使用说明"><span>?</span><span class="sf-text">说明</span></button>
+      </div>
+    </nav>
+
+    <main class="main">
+      <div class="crumb-bar">
+        <button class="crumb-back" id="crumbBack">← 返回</button>
+        <div class="crumbs" id="crumbs"></div>
+        <div class="crumb-right" id="crumbRight"></div>
+      </div>
+      <div class="content" id="content"></div>
+    </main>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+<div class="chart-tip" id="chartTip"></div>
+
+<!-- 项目经理版：同一份代码，只在这里打一个发行标记。
+     不物理拆两套目录——这套架构的角色差异本来就只在编排层，
+     拆两份必然漂移（改一处要记得改两边，迟早出事）。 -->
+<script>window.PMW_EDITION = 'pm';</script>
+<script src="assets/js/00-util.js"></script>
+<script src="assets/js/01-config.js"></script>
+<script src="assets/js/02b-data.js"></script>
+<script src="assets/js/cloud.js"></script>
+<script>CLOUD.requireRole('pm');</script>
+<script src="assets/js/03-store.js"></script>
+<script src="assets/js/04-charts.js"></script>
+<script src="assets/js/05-ui.js"></script>
+<script src="assets/js/06-shell.js"></script>
+<script src="assets/js/07-page.js"></script>
+<script src="assets/js/08-guide.js"></script>
+<script src="assets/js/09-guidepage.js"></script>
+
+<script src="assets/js/10-dashboard.js"></script>
+<script src="assets/js/11-requirements.js"></script>
+<script src="assets/js/12-releases.js"></script>
+<script src="assets/js/13-analytics.js"></script>
+<script src="assets/js/14-collab.js"></script>
+<script src="assets/js/15-meetings.js"></script>
+<script src="assets/js/16-risks.js"></script>
+<script src="assets/js/17-trace.js"></script>
+<script src="assets/js/18-todos.js"></script>
+
+<script src="assets/js/20-roadmap.js"></script>
+<script src="assets/js/21-feedback.js"></script>
+<script src="assets/js/22-team.js"></script>
+<script src="assets/js/23-bizreview.js"></script>
+
+<script src="assets/js/30-plan.js"></script>
+<script src="assets/js/31-tasks.js"></script>
+<script src="assets/js/32-progress.js"></script>
+<script src="assets/js/33-resources.js"></script>
+<script src="assets/js/34-changes.js"></script>
+<script src="assets/js/35-delivery.js"></script>
+<script src="assets/js/36-reports.js"></script>
+<script src="assets/js/37-exchange.js"></script>
+
+<script src="assets/js/99-app.js"></script>
+</body>
+</html>
