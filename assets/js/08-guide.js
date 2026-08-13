@@ -163,6 +163,12 @@ window.G = (function () {
     return (S.DB[k] || []).length;
   }
 
+  function realMemberCount() {
+    return (S.DB.members || []).filter(function (m) {
+      return m && m.id !== 'M01' && m.id !== 'M_DIRECTOR' && m.id !== 'M_PM';
+    }).length;
+  }
+
   /* ============================================================
    * 二、上手清单
    * done 全部由真实数据推导，不需要你手动打钩
@@ -195,7 +201,7 @@ window.G = (function () {
       {
         k: 'member', title: '把常打交道的人录进成员表',
         desc: '所有「负责人 / 处理人」下拉框都取自这里。录人在前，填单在后。（成员表里默认已经有「你自己」一条）',
-        done: cnt.members > 1, cur: cnt.members,
+        done: realMemberCount() > 0, cur: realMemberCount(),
         act: { type: 'create', k: 'member.new', text: '添加成员' },
         roles: ['director']
       },
